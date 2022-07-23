@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 // Errors
 error PandaMarket__NotTheOwner();
-error PandaMarket__PriceShouldBeZero();
+error PandaMarket__PriceShouldNotBeZero();
 error PandaMarket__NotApproved();
 error PandaMarket__AlreadyListed();
 
@@ -21,7 +21,7 @@ contract PandaMarket {
 
     // State Variables
     uint8 private immutable marketFee;
-    mapping(address => mapping(uint256 => Listing)) private listed;
+    mapping(address => mapping(uint256 => Listing)) private s_listed;
 
     // Events
     event NftListed(
@@ -42,7 +42,7 @@ contract PandaMarket {
     }
 
     modifier notListed(address nftAddress, uint256 tokenId) {
-        if (listed[nftAddress][tokenId].price != 0){
+        if (s_listed[nftAddress][tokenId].price != 0){
             revert PandaMarket__AlreadyListed();
         }
         _;
@@ -55,20 +55,39 @@ contract PandaMarket {
     constructor(uint8 fee){
         marketFee = fee;
     }
+    // External Functions
 
-    /// @notice Lists an NFT for sale
+    /// @notice Lists an NFT for sale. Inputs are nftAddress, tokenId and price
     /// @dev Lists an NFT for sale
+    /// @param nftAddress - The address of the NFT contract to be listed
+    /// @param tokenId - The tokenId of the NFT to be listed
+    /// @param price - The price the NFT should listed
     function listNft(address nftAddress, uint256 tokenId, uint256 price) external isOwner(nftAddress,tokenId) notListed(nftAddress, tokenId){
 
         if (price <= 0) {
-            revert PandaMarket__PriceShouldBeZero();
+            revert PandaMarket__PriceShouldNotBeZero();
         }
         IERC721 nft = IERC721(nftAddress);
         if (nft.getApproved(tokenId)!= address(this)) {
             revert PandaMarket__NotApproved();
         }
 
-        listed[nftAddress][tokenId] = Listing(msg.sender,price);
+        s_listed[nftAddress][tokenId] = Listing(msg.sender,price);
         emit NftListed(nftAddress, tokenId,msg.sender,price);
     }
+
+    // Public Functions
+
+
+    // Getter Functions
+    
+    /// @notice Gets the listed struct:- nftAddress, tokenId
+    /// @dev Returns the listed struct
+    /// @notice
+    /// @param nftAddress - the address of the listed NFT to get,
+    /// @param tokenId - the tokenId of the listed NFT to get
+    function getListed(address nftAddress, uint256 tokenId) public view returns(Listing memory) {
+        return s_listed[nftAddress][tokenId];
+    }
+
 }

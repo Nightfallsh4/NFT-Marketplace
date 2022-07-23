@@ -19,7 +19,7 @@ module.exports = {
 	// 	compilers: [{ version: "0.8.9" }, { version: "0.4.19" }, { version: "0.6.12" }],
 	// },
 	gasReporter: {
-		enabled: true,
+		enabled: false,
 	},
 	defaultNetwork: "hardhat",
 	networks: {
