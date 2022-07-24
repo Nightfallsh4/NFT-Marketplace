@@ -48,5 +48,8 @@ module.exports = {
 		player: {
 			default: 1,
 		},
+		player2: {
+			default: 2,
+		}
 	},
 }

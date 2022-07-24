@@ -10,6 +10,7 @@ contract PandaNft is ERC721Royalty{
     constructor() ERC721("Panda","PAN"){
         s_counter = 0;
         _setDefaultRoyalty(msg.sender,500);
+        
     }
 
     function mintNft() public {
