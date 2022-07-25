@@ -159,9 +159,31 @@ const { developmentChains } = require("../../helper-hardhat-config")
 				})
 				it("Emits Event", async () => {
 					await nft.approve(deployerMarketplace.address, tokenId)
-					const previousOwner = await nft.ownerOf(tokenId)
 					await deployerMarketplace.listNft(nft.address, tokenId, price)
 					await expect(playerMarketplace.buyNft(nft.address, tokenId,{value:price})).to.emit(playerMarketplace,"NftBought")
+				})
+			})
+			describe("cancelNft tests", () => {
+				it("checks if the transaction is sent ny NFT owner", async () => {
+					await nft.approve(deployerMarketplace.address,tokenId)
+					await deployerMarketplace.listNft(nft.address, tokenId, price)
+					await expect(playerMarketplace.cancelNft(nft.address, tokenId)).to.be.revertedWith("PandaMarket__NotTheOwner")
+				})
+				it("checks if NFT is Not listed", async () => {
+					await nft.approve(deployerMarketplace.address,tokenId)
+					await expect(deployerMarketplace.cancelNft(nft.address,tokenId)).to.be.revertedWith("PandaMarket__NotListed")
+				})
+				it("Checks if listing is actually deleted", async () => {
+					await nft.approve(deployerMarketplace.address,tokenId)
+					await deployerMarketplace.listNft(nft.address, tokenId, price)
+					await deployerMarketplace.cancelNft(nft.address, tokenId)
+					const list = await deployerMarketplace.getListed(nft.address, tokenId)
+					assert.equal("0",list.price.toString())
+				})
+				it("Emits Event", async () => {
+					await nft.approve(deployerMarketplace.address,tokenId)
+					await deployerMarketplace.listNft(nft.address, tokenId, price)				
+					await expect(deployerMarketplace.cancelNft(nft.address, tokenId)).to.emit(deployerMarketplace,"NftCancelled")
 				})
 			})
 	  })

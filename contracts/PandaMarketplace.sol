@@ -45,6 +45,11 @@ contract PandaMarket {
         address indexed buyer
     );
 
+    event NftCancelled(
+        address indexed nftAddress,
+        uint256 indexed tokenId
+    );
+
     // Modifiers
     modifier isOwner(address nftAddress, uint256 tokenId){
         IERC721 nft = IERC721(nftAddress);
@@ -142,6 +147,14 @@ contract PandaMarket {
         }
         
         emit NftBought(nftAddress, tokenId, msg.sender);
+    }
+
+    /// @notice Cancels Listing if NFT. Takes Inputs as NftAddress, tokenId
+    /// @param nftAddress - Address of the NFT to be delisted
+    /// @param tokenId - Token ID of the NFT to be delisted
+    function cancelNft(address nftAddress, uint256 tokenId) external isOwner(nftAddress,tokenId) isListed(nftAddress, tokenId) {
+        delete s_listed[nftAddress][tokenId];
+        emit NftCancelled(nftAddress, tokenId);
     }
 
     // Public Functions

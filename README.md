@@ -12,3 +12,4 @@
     3. Cancel NFT
     4. Update NFT Listing Price
     5. Withdraw Proceeds
+    6. Withdraw MarketFee
