@@ -156,6 +156,16 @@ contract PandaMarket {
         delete s_listed[nftAddress][tokenId];
         emit NftCancelled(nftAddress, tokenId);
     }
+    /// @notice Updates the Listed Price of the NFT. Takes Input as nftAddress, tokenId and newPrice
+    /// @param nftAddress - Address of the NFT to be updated
+    /// @param tokenId - tokenId of the NFT to be updated
+    /// @param newPrice -The new price it should be updated to.
+    function updateNft(address nftAddress, uint256 tokenId, uint256 newPrice) external isOwner(nftAddress,tokenId) isListed(nftAddress, tokenId) {
+        s_listed[nftAddress][tokenId] = Listing(msg.sender,newPrice);
+        emit NftListed(nftAddress, tokenId, msg.sender, newPrice);
+    }
+
+
 
     // Public Functions
 
