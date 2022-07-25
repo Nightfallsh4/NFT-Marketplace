@@ -213,5 +213,26 @@ const { developmentChains } = require("../../helper-hardhat-config")
 					await expect(deployerMarketplace.updateNft(nft.address, tokenId,newPrice)).to.emit(deployerMarketplace,"NftListed")
 				})
 			})
-			describe("")
+			describe("withdrawProceeds tests", async () => {
+				it("Reverts if No funds to withdraw", async () => {
+					await expect(playerMarketplace.withdrawProceeds()).to.be.revertedWith("PandaMarket__NotEnoughFunds")
+				})
+				it("Checks is proceeds is set to zero after withdraw", async () => {
+					const player2 = (await getNamedAccounts()).player2
+					const player2Marketplace = await ethers.getContract("PandaMarket", player2)
+					
+					const nftPlayer = await ethers.getContract("PandaNft",player)
+					await nftPlayer.mintNft()
+					const tokenIdPlayer = await nftPlayer.getCounter()
+
+					await nftPlayer.approve(playerMarketplace.address,tokenIdPlayer)
+					await playerMarketplace.listNft(nftPlayer.address, tokenIdPlayer, price)
+					await player2Marketplace.buyNft(nftPlayer.address, tokenIdPlayer, {value:price})
+					
+					await playerMarketplace.withdrawProceeds()
+
+					const updatedProceeds = await playerMarketplace.getProceeds(player)
+					assert.equal("0", updatedProceeds.toString())
+				})
+			})
 	  })

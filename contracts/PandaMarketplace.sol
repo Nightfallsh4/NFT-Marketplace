@@ -12,6 +12,8 @@ error PandaMarket__NotApproved();
 error PandaMarket__AlreadyListed();
 error PandaMarket__NotListed();
 error PandaMarket__NotEnoughFunds();
+error PandaMarket__DontStealNotOwner();
+error PandaMarket__TransferNotSuccess();
 
 /// @title An NFT Marketplace to trade NFTs
 /// @author Shanmugadevan
@@ -140,7 +142,7 @@ contract PandaMarket {
         }else {
         
             uint256 sellerProceeds = msg.value - marketFee;
-        
+
             nft.safeTransferFrom(list.seller, msg.sender, tokenId);
             s_proceeds[list.seller] += sellerProceeds;
         
@@ -156,6 +158,7 @@ contract PandaMarket {
         delete s_listed[nftAddress][tokenId];
         emit NftCancelled(nftAddress, tokenId);
     }
+    
     /// @notice Updates the Listed Price of the NFT. Takes Input as nftAddress, tokenId and newPrice
     /// @param nftAddress - Address of the NFT to be updated
     /// @param tokenId - tokenId of the NFT to be updated
@@ -165,13 +168,24 @@ contract PandaMarket {
         emit NftListed(nftAddress, tokenId, msg.sender, newPrice);
     }
 
-
+    /// @notice Withdraw the proceeds of an account from sales
+    function withdrawProceeds() external {
+        uint256 proceed = getProceeds(msg.sender);
+        if (proceed <= 0) {
+            revert PandaMarket__NotEnoughFunds();
+        }
+        s_proceeds[msg.sender] = 0;
+        (bool success, ) = payable(msg.sender).call{value:proceed}("");
+        if (!success) {
+            revert PandaMarket__TransferNotSuccess();
+        }
+    }
 
     // Public Functions
 
 
     // Getter Functions
-    
+   
     /// @notice Gets the listed struct:- nftAddress, tokenId
     /// @dev Returns the listed struct
     /// @param nftAddress - the address of the listed NFT to get,
