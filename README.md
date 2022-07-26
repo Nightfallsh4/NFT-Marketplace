@@ -1,16 +1,19 @@
-1. Make nft
-    1. make contract 
-    2. Make correct token uri
-    3. Test contract
-2. Upload nft to ipfs
-3. Make marketplace contract
-    1. List NFT
-    2. Buy NFT
-        1. Takes marketplace fees
-        2. Withdrawable Owner fees
-        3. Withdrawable Creator royalty
-    3. Cancel NFT
-    4. Update NFT Listing Price
-    5. Withdraw Proceeds
-    6. Withdraw MarketFee
-4. Write docs
+
+# **Panda NFT Marketplace**
+
+## **Introduction**
+
+This is a decentralized NFT marketplace smart contract which can be used to buy and sell NFTs. The Marketplace is compatible with the ERC721 standard.
+
+It checks for royalty fees to paid to the creator and adds the royalty to the creator's account. The marketplace has a fixed market fee which is taken from every NFT sale and sent to the Market Treasury, which can be withdrawn only by the owner.
+
+## **Get Started**
+
+To be get started git clone the project into a project folder. Open the terminal is the project folder and give the following command to set it up.
+
+    yarn install
+or
+
+    npm install
+
+Pre-Requisites- node LTS, yarn and npm

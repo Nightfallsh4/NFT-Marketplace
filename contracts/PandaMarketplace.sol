@@ -54,6 +54,11 @@ contract PandaMarket {
     );
 
     // Modifiers
+
+    /// @notice Checks to see if the transaction sender is the owner of the NFT. Input- nftAddress, tokenId
+    /// @dev Checks if msg.sender is the ownerOf the NFT address
+    /// @param nftAddress - Address of the NFT
+    /// @param tokenId - Token ID of the NFT
     modifier isOwner(address nftAddress, uint256 tokenId){
         IERC721 nft = IERC721(nftAddress);
         if (msg.sender != nft.ownerOf(tokenId)){
@@ -62,6 +67,9 @@ contract PandaMarket {
         _;
     }
 
+    /// @notice Checks if the NFT is not listed already. Input- nftAddress, tokenId
+    /// @param nftAddress - Address of the NFT
+    /// @param tokenId - Token ID of the NFT
     modifier notListed(address nftAddress, uint256 tokenId) {
         if (s_listed[nftAddress][tokenId].price != 0){
             revert PandaMarket__AlreadyListed();
@@ -69,6 +77,9 @@ contract PandaMarket {
         _;
     }
 
+    /// @notice Checks if the NFT is listed already. Input- nftAddress, tokenId
+    /// @param nftAddress - Address of the NFT
+    /// @param tokenId - Token ID of the NFT
     modifier isListed(address nftAddress, uint256 tokenId) {
         if (s_listed[nftAddress][tokenId].price == 0) {
             revert PandaMarket__NotListed();
@@ -209,22 +220,35 @@ contract PandaMarket {
         return s_listed[nftAddress][tokenId];
     }
 
+    /// @notice Gets the proceeds of a user from NFT sales. Takes userAddress as input
+    /// @dev returns the proceeds of a address from NFT sales.
+    /// @param userAddress - the Address which the proceeds is needed
     function getProceeds(address userAddress) public view returns (uint256) {
         return s_proceeds[userAddress];
     }
 
+    /// @notice Calculates the market fee of an NFT sale. Takes price as the input
+    /// @param price - the price of the sale
     function getMarketFee(uint256 price) public view returns (uint256){
         return price * i_marketFee / 100;
     }
 
+    /// @notice returns the balance of the market treasury
     function getTreasuryBalance() public view returns (uint256){
         return s_marketTreasury;
     }
 
+    /// @notice Checks whether the NFT contract is ERC2981 compatible for creator royalty. Takes _contract of the NFT as an input.
+    /// @param _contract - the Contract Address of the NFT
     function checkRoyalties(address _contract) internal view returns (bool) {
         (bool success) = IERC165(_contract).supportsInterface(_INTERFACE_ID_ERC2981);
         return success;
     }
+
+    /// @notice Returns the amount and the address to pay the royalty to. Takes input as nftAddress, tokenId and price.
+    /// @param nftAddress - The Address of the NFT
+    /// @param tokenId - The Token ID of the NFT
+    /// @param price - The Price of the NFT
     function getRoyaltyData(address nftAddress, uint256 tokenId,uint256 price) public view returns(address,uint256) {
         return ERC721Royalty(nftAddress).royaltyInfo(tokenId,price);
     }
