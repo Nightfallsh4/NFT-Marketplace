@@ -14,6 +14,7 @@ error PandaMarket__NotListed();
 error PandaMarket__NotEnoughFunds();
 error PandaMarket__DontStealNotOwner();
 error PandaMarket__TransferNotSuccess();
+error PandaMarket__NotOwner__StopTryingToStealDumbass();
 
 /// @title An NFT Marketplace to trade NFTs
 /// @author Shanmugadevan
@@ -180,7 +181,21 @@ contract PandaMarket {
             revert PandaMarket__TransferNotSuccess();
         }
     }
-
+    /// @notice Withdraws the market treasury to the owner's address
+    function withdrawTreasury() external {
+        if (msg.sender != i_owner) {
+            revert PandaMarket__NotOwner__StopTryingToStealDumbass();
+        }
+        uint256 treasuryBalance = getTreasuryBalance();
+        if (treasuryBalance <= 0) {
+            revert PandaMarket__NotEnoughFunds();
+        }
+        s_marketTreasury = 0;
+        (bool success, ) = payable(i_owner).call{value:treasuryBalance}("");
+        if (!success) {
+            revert PandaMarket__TransferNotSuccess();
+        }
+    }
     // Public Functions
 
 

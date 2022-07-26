@@ -1,5 +1,5 @@
 const { expect, assert } = require("chai")
-const { network, getNamedAccounts, deployments, ethers } = require("hardhat")
+const { network, getNamedAccounts, deployments, ethers, waffle } = require("hardhat")
 const { developmentChains } = require("../../helper-hardhat-config")
 /* global BigInt */
 
@@ -213,7 +213,7 @@ const { developmentChains } = require("../../helper-hardhat-config")
 					await expect(deployerMarketplace.updateNft(nft.address, tokenId,newPrice)).to.emit(deployerMarketplace,"NftListed")
 				})
 			})
-			describe("withdrawProceeds tests", async () => {
+			describe("withdrawProceeds tests", () => {
 				it("Reverts if No funds to withdraw", async () => {
 					await expect(playerMarketplace.withdrawProceeds()).to.be.revertedWith("PandaMarket__NotEnoughFunds")
 				})
@@ -233,6 +233,64 @@ const { developmentChains } = require("../../helper-hardhat-config")
 
 					const updatedProceeds = await playerMarketplace.getProceeds(player)
 					assert.equal("0", updatedProceeds.toString())
+				})
+			})
+			describe("withdrawTreasury tests", () => {
+				it("Reverts if not Market owner", async () => {
+					const player2 = (await getNamedAccounts()).player2
+					const player2Marketplace = await ethers.getContract("PandaMarket", player2)
+					
+					const nftPlayer = await ethers.getContract("PandaNft",player)
+					await nftPlayer.mintNft()
+					const tokenIdPlayer = await nftPlayer.getCounter()
+
+					await nftPlayer.approve(playerMarketplace.address,tokenIdPlayer)
+					await playerMarketplace.listNft(nftPlayer.address, tokenIdPlayer, price)
+					await player2Marketplace.buyNft(nftPlayer.address, tokenIdPlayer, {value:price})
+					
+					await expect(playerMarketplace.withdrawTreasury()).to.be.revertedWith("PandaMarket__NotOwner__StopTryingToStealDumbass")
+				})
+				it("Reverts if treasury balance is zero", async () => {
+					await expect(deployerMarketplace.withdrawTreasury()).to.be.revertedWith("PandaMarket__NotEnoughFunds")
+				})
+				it("Treasury Balance becomes zero", async () => {
+					const player2 = (await getNamedAccounts()).player2
+					const player2Marketplace = await ethers.getContract("PandaMarket", player2)
+					
+					const nftPlayer = await ethers.getContract("PandaNft",player)
+					await nftPlayer.mintNft()
+					const tokenIdPlayer = await nftPlayer.getCounter()
+
+					await nftPlayer.approve(playerMarketplace.address,tokenIdPlayer)
+					await playerMarketplace.listNft(nftPlayer.address, tokenIdPlayer, price)
+					await player2Marketplace.buyNft(nftPlayer.address, tokenIdPlayer, {value:price})
+					
+					await deployerMarketplace.withdrawTreasury()
+					const currentMarketTreasury = await deployerMarketplace.getTreasuryBalance()
+					assert.equal("0",currentMarketTreasury.toString())
+				})
+				it("Checks if Treasury Balance goes to the owner", async () => {
+					const player2 = (await getNamedAccounts()).player2
+					const player2Marketplace = await ethers.getContract("PandaMarket", player2)
+					const provider =  waffle.provider
+					const previousBalance = await provider.getBalance(deployer)
+					const nftPlayer = await ethers.getContract("PandaNft",player)
+					await nftPlayer.mintNft()
+					const tokenIdPlayer = await nftPlayer.getCounter()
+
+					await nftPlayer.approve(playerMarketplace.address,tokenIdPlayer)
+					await playerMarketplace.listNft(nftPlayer.address, tokenIdPlayer, price)
+					await player2Marketplace.buyNft(nftPlayer.address, tokenIdPlayer, {value:price})
+					
+					const txResponse = await deployerMarketplace.withdrawTreasury()
+					const txReceipt = await txResponse.wait(1)
+
+					const marketFee = await deployerMarketplace.getMarketFee(price)
+					const gasFee = BigInt(txReceipt.cumulativeGasUsed) * BigInt(txReceipt.effectiveGasPrice)
+					const expectedBalance = BigInt(previousBalance) + BigInt(marketFee) - gasFee
+					
+					const currentBalance = await provider.getBalance(deployer)
+					assert.equal(expectedBalance.toString(), currentBalance.toString())
 				})
 			})
 	  })
